@@ -23,36 +23,37 @@ The roles will be predefined and the canister will provide the following functio
 
 */
 use ic_cdk::{
-    api::call::ManualReply, export::Principal, init, post_upgrade, pre_upgrade, query, storage,
-    update,
+    init,
+    export::{
+        candid::{CandidType, Deserialize},
+        Principal,
+    },
 };
-use std::collections::{BTreeMap, BTreeSet};
+use std::clone::Clone;
+use std::cell::RefCell;
+use std::collections::HashMap;
 
-enum AccessRole {
-    Admin,
-    Manager
-}
-
-enum CanisterRole {
+#[derive(Clone, Debug, Deserialize)]
+enum Role {
     Admin,
     Manager,
     Deploy,
     ReadOnly,
 }
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
-struct CanisterAccess {
+#[derive(Clone, Debug, Deserialize)]
+struct UserAccess {
     pub principal: Principal,
     pub description: String,
-    pub keywords: Vec<String>,
+    pub role: Role,
 }
 
-type Roles = BTreeSet<Principal, AccessRole>;
-type CanisterRoles = BTreeMap<String, CanisterAccess>;
+type InternalMapping = HashMap<Principal, UserAccess>;
+type ExternalMapping = HashMap<Principal, UserAccess>;
 
 thread_local! {
-    static ROLES: RefCell<Roles> = RefCell::default();
-    static CANISTER_ROLES: RefCell<CanisterRoles> = RefCell::default();
+    static INTERNAL_MAPPING: RefCell<InternalMapping> = RefCell::default();
+    static EXTERNAL_MAPPING: RefCell<ExternalMapping> = RefCell::default();
 }
 
 #[init]
