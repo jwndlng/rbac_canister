@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "rbac": {
+      "candid": "src/rbac/rbac.did",
+      "package": "rbac",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
