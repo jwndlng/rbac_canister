@@ -1,67 +1,35 @@
+mod acl;
+mod storage;
+mod guard;
 
-// Role based access control canister
+use candid::{Principal, candid_method};
+use ic_cdk::{update, query, init};
+use guard::is_authorized_admin;
 
-/*
-
-This canister will have two access control mechanism:
-1. Access control for the canister itself
-2. Access control for other canisters
-
-1. Access control for the canister itself
-The idea of this canister is to provide rbac functionality for the canister itself.
-The roles will be predefined and the canister will provide the following functions:
-- superadmin can do everything
-- manager can add new canisters and assign roles to users
-
-2. Access control for other canisters
-The idea of this canister is to provide rbac functionality for other canisters.
-The roles will be predefined and the canister will provide the following functions:
-- superadmin can do everything on another canister
-- manager can fully manage a canister but not change its controller
-- CI can only deploy a canister
-- Read only can only read from a canister like its status for cycle monitoring
-
-*/
-use ic_cdk::{
-    init,
-    export::{
-        candid::{CandidType, Deserialize},
-        Principal,
-    },
-};
-use std::clone::Clone;
-use std::cell::RefCell;
-use std::collections::HashMap;
-
-#[derive(Clone, Debug, Deserialize)]
-enum Role {
-    Admin,
-    Manager,
-    Deploy,
-    ReadOnly,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct UserAccess {
-    pub principal: Principal,
-    pub description: String,
-    pub role: Role,
-}
-
-type InternalMapping = HashMap<Principal, UserAccess>;
-type ExternalMapping = HashMap<Principal, UserAccess>;
-
-thread_local! {
-    static INTERNAL_MAPPING: RefCell<InternalMapping> = RefCell::default();
-    static EXTERNAL_MAPPING: RefCell<ExternalMapping> = RefCell::default();
-}
 
 #[init]
+#[candid_method(init)]
 fn init() {
-    // pass
+    ic_cdk::println!("rbac::init() - caller: {:?}", ic_cdk::api::caller());
+    // Add the caller as an admin to bootstrap the canister
+    acl::authorize(ic_cdk::api::caller(), acl::Role::SuperAdmin);
 }
 
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+// Local access permissions
+#[update(guard = "is_authorized_admin")]
+#[candid_method(update)]
+fn authorize(principal: Principal, role: acl::Role) {
+    acl::authorize(principal, role);
+}
+
+#[update(guard = "is_authorized_admin")]
+#[candid_method(update)]
+fn deauthorize(principal: Principal) {
+    acl::deauthorize(principal);
+}
+
+#[query(guard = "is_authorized_admin")]
+#[candid_method(query)]
+fn get_authorized() -> Vec<acl::Access> {
+    acl::get_authorized()
 }

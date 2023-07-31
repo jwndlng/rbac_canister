@@ -1,3 +1,19 @@
+type Role = 
+  variant {
+    SuperAdmin;
+    Admin;
+    Manager;
+    Viewer;
+};
+
+type Access = 
+ record {
+   id: principal;
+   role: Role;
+ };
+
 service : {
-    "greet": (text) -> (text) query;
-}
+    "authorize": (user: principal, role: Role) -> ();
+    "deauthorize": (user: principal) -> ();
+    "get_authorized": () -> (vec Access) query;
+};
