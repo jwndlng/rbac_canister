@@ -4,7 +4,7 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 use ic_stable_structures::storable::Blob;
 
 // Memory IDs
-const UPGRADE_MEM_ID: MemoryId = MemoryId::new(0);
+const _: MemoryId = MemoryId::new(0); // Reserving slot 0 for future use
 const AUTH_MEM_ID: MemoryId = MemoryId::new(1);
 
 // Types

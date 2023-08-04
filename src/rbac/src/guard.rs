@@ -1,32 +1,30 @@
 use crate::storage::AUTH;
 use ic_stable_structures::{storable::Blob as StorableBlob, Storable};
-use crate::acl::Role::SuperAdmin;
+use crate::acl::Role;
+use num::FromPrimitive;
 
-pub fn is_authorized_admin() -> Result<(), String> {
-    AUTH.with(|a| {
-        if let Some(value) = a.borrow().get(&StorableBlob::from_bytes(
-            ic_cdk::api::caller().as_slice().into(),
-        )) {
-            if value <= SuperAdmin as u32 {
-                Ok(())
-            } else {
-                Err("is_authorized_admin(): You are not authorized.".to_string())
-            }
-        } else {
-            Err("is_authorized_admin(): You are not authorized.".to_string())
-        }
-    })
+pub fn is_admin() -> Result<(), String> {
+    is_authorized(Role::Admin)
 }
 
-// canister admin access
-pub fn is_authorized() -> Result<(), String> {
+pub fn is_manager() -> Result<(), String> {
+    is_authorized(Role::Manager)
+}
+
+pub fn is_viewer() -> Result<(), String> {
+    is_authorized(Role::Viewer)
+}
+
+pub fn is_authorized(required_role: Role) -> Result<(), String> {
     AUTH.with(|a| {
-        if a.borrow().contains_key(&StorableBlob::from_bytes(
-            ic_cdk::api::caller().as_slice().into(),
-        )) {
-            Ok(())
-        } else {
-            Err("is_authorized_user(): You are not authorized.".to_string())
+        let role: Role = Role::from_u32(
+            a.borrow().get(&StorableBlob::from_bytes(
+                ic_cdk::api::caller().as_slice().into()
+            )).unwrap_or(Role::Anonymous as u32)
+        ).unwrap();
+        if role.has_permission(required_role) {
+            return Ok(());
         }
+        return Err("You are not authorized.".to_string());
     })
 }
