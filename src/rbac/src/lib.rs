@@ -4,7 +4,12 @@ pub mod guard;
 pub mod storage;
 
 use candid::{Principal, candid_method};
-use ic_cdk::{update, query, init, api::management_canister::main::CanisterStatusResponse};
+use ic_cdk::{
+    update, query, init,
+    api::management_canister::main::{
+        CanisterInstallMode, CanisterStatusResponse
+    }
+};
 use guard::{is_admin, is_manager, is_viewer};
 
 #[init]
@@ -38,9 +43,14 @@ async fn delegate_call(canister_id: Principal, method: String, args: Vec<u8>) ->
     canister::delegate_call(canister_id, method, args).await
 }
 
+#[update(guard = "is_manager")]
+#[candid_method(update)]
+async fn install_code(canister_id: Principal, mode: CanisterInstallMode, wasm_code: Vec<u8>, arg: Vec<u8>) {
+    let _ = canister::install_code(canister_id, mode, wasm_code, arg).await;
+}
+
 #[update(guard = "is_viewer")]
 #[candid_method(update)]
 async fn canister_status(canister_id: Principal) -> Result<CanisterStatusResponse, String> {
-    let result = canister::canister_status(canister_id);
-    result.await
+    canister::canister_status(canister_id).await
 }

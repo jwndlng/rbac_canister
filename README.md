@@ -39,6 +39,7 @@ Refer to the provided Rust code in `src/` for usage.
 - The `install_code` and `uninstall_code` functions are under development. Upon completion, they will provide additional control over the canisters.
 - A significant enhancement will be support for asset canisters, allowing this RBAC system to manage access to various kinds of digital assets.
 - The RBAC canister is designed with CI/CD integrations in mind. A future update will include a demonstration of a GitHub Action deployment using the RBAC canister.
+- Review if its possible to use `dfx` to WASM Code and format, so it can be used in a canister call.
 
 ## Contributing
 

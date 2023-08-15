@@ -10,32 +10,39 @@ type Access = record {
     role: Role;
  };
 
-type CanisterStatusResponse = record {
-    status: CanisterStatusType; // Table 2
-    memory_size: nat;
-    cycles: nat;
-    settings: DefiniteCanisterSettings; // Table 3
-    idle_cycles_burned_per_day: nat;
-    module_hash: opt vec nat8; // Table Table 5
+
+// service: canister_status
+type CanisterStatusResult = variant {
+    Ok: CanisterStatusResponse;
+    Err: text;
 };
 
-type DefiniteCanisterSettings = record { // Table 3
+type CanisterStatusResponse = record {
+    status: CanisterStatusType;
+    memory_size: nat;
+    cycles: nat;
+    settings: DefiniteCanisterSettings;
+    idle_cycles_burned_per_day: nat;
+    module_hash: opt vec nat8;
+};
+
+type CanisterStatusType = variant { stopped; stopping; running; };
+
+type DefiniteCanisterSettings = record {
     compute_allocation: nat;
     controllers: vec principal;
     memory_allocation: nat;
     freezing_threshold: nat;
 };
 
-type CanisterStatusType = variant { stopped; stopping; running };
+// service: install_code
+type InstallMode = variant { install; reinstall; upgrade; }
 
-type Result = variant {
-    Ok: CanisterStatusResponse;
-    Err: text;
-}
-
+// Service declaration
 service : {
-    canister_status : (canister_id: principal) -> (Result);
+    canister_status : (canister_id: principal) -> (CanisterStatusResult);
     delegate_call: (canister_id: principal, method: text, arg: blob) -> (blob);
+    install_code: (canister_id: principal, mode: InstallMode, wasm_module: blob, arg: blob) -> ();
     get_access_list: () -> (vec Access) query;
     grant_access: (user: principal, role: Role) -> ();
     revoke_access: (user: principal) -> ();
